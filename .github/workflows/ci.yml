@@ -1,0 +1,27 @@
+name: Raduna CI
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+concurrency:
+  group: raduna-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    if: ${{ false && github.event_name == 'pull_request' }}
+    name: Maven verify (JDK 25)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Verifica Docker per Testcontainers
+        run: docker info
+      - name: Build, test e packaging
+        run: sh ./mvnw -B -ntp clean verify

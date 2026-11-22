@@ -1,0 +1,52 @@
+name: Task agentico Raduna
+description: Avvio controllato di un singolo caso d'uso; YouTrack resta il riferimento principale.
+title: "[Raduna] "
+labels: [task-agente]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Infrastruttura in prova: gli agenti sono disabilitati e gli output staged.
+        Non inserire segreti o dati personali. Una label non approva il piano.
+  - type: input
+    id: youtrack
+    attributes:
+      label: Task YouTrack e Work Package
+      description: ID e collegamento effettivi; non usare identificativi inventati.
+    validations:
+      required: true
+  - type: input
+    id: usecase
+    attributes:
+      label: Requisito e caso d'uso
+      description: ID RAD, priorità approvata e un solo caso d'uso o sequence diagram.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: Artefatti approvati
+      description: RAD, SDD, ODD, class/sequence/component diagram; versione, posizione e prova di approvazione. Motivare le voci non applicabili.
+    validations:
+      required: true
+  - type: textarea
+    id: frames
+    attributes:
+      label: Category Partition e test frame
+      description: Per ogni frame indicare input, precondizioni, esito atteso e fonte approvata. Includere firme pubbliche separate dai corpi dei metodi.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Obiettivo e criteri di accettazione
+      description: Flusso principale, eccezioni, controlli e limiti proposti di tempo e tentativi.
+    validations:
+      required: true
+  - type: input
+    id: tm
+    attributes:
+      label: TM responsabile
+      description: Il TM assegnato commenta sulla Issue con il link al piano approvato, poi aggiunge fase:implementazione.
+    validations:
+      required: true
