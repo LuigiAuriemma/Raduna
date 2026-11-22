@@ -1,0 +1,24 @@
+/target/
+
+# Configurazione e credenziali locali (Spring Boot non carica automaticamente .env).
+.env
+.env.*
+!.env.example
+/config/
+/application-local.properties
+/application-local.yml
+/application-local.yaml
+/src/main/resources/application-local.properties
+/src/main/resources/application-local.yml
+/src/main/resources/application-local.yaml
+
+# Log, IDE e file del sistema operativo.
+*.log
+/.idea/
+*.iml
+/.vscode/
+/.classpath
+/.project
+/.settings/
+.DS_Store
+Thumbs.db
