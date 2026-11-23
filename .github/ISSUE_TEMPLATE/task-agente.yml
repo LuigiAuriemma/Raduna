@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Infrastruttura in prova: gli agenti sono disabilitati e gli output staged.
+        Il Pianificatore può pubblicare un piano sulla Issue; gli altri agenti restano disabilitati.
         Non inserire segreti o dati personali. Una label non approva il piano.
   - type: input
     id: youtrack

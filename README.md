@@ -10,6 +10,8 @@ Progetto universitario del team C16 per il corso di Gestione dei Progetti Softwa
 
 Si adotta una release stabile di Spring Boot con le dipendenze compatibili gestite dal suo parent Maven. Versioni di riferimento verificate il **22 novembre 2026**:
 
+Il Pianificatore Actions usa Copilot CLI **1.0.114** e Node 22 in un'immagine con digest fissato; versione e compatibilità della CLI verificate il **23 novembre 2026** sulla [release ufficiale](https://github.com/github/copilot-cli/releases/tag/v1.0.114) e sulla [guida di installazione](https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli). Il collaudo con l'identità Copilot del team resta da eseguire.
+
 | Tecnologia | Versione stabile | Fonte ufficiale |
 | --- | --- | --- |
 | Java SE / JDK | 25 LTS, con aggiornamenti della serie 25 | [Oracle](https://www.oracle.com/java/technologies/downloads/) |

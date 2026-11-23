@@ -1,7 +1,7 @@
 # Template delle issue
 
-Questa cartella è riservata ai futuri template di GitHub Issues. Le tipologie di issue, i campi e le regole d’uso sono da definire con i PM.
+Il modulo `task-agente.yml` raccoglie YouTrack/WP, riferimenti approvati, frame, criteri e TM responsabile per l'avvio controllato del Pianificatore.
 
-**Uso previsto.** Qui andranno i file dei template, in Markdown o come moduli YAML. Una volta introdotti, guideranno chi apre un’issue a fornire le informazioni che il team riterrà utili per gestirla.
+La label `fase:piano` avvia il Pianificatore solo su una Issue aperta con `task-agente` e se applicata da un membro con accesso Write. Il piano pubblicato resta una proposta: il TM assegnato lo approva esplicitamente prima dell'implementazione.
 
-**Indicazione proposta.** Quando riceve un task sui template, GitHub Copilot può preparare una bozza a partire dalle informazioni disponibili e segnalare i campi ancora da definire. Le istruzioni condivise sono in [AGENTS.md](../../AGENTS.md).
+Le istruzioni condivise sono in [AGENTS.md](../../AGENTS.md).

@@ -25,7 +25,7 @@ Percorsi dalla radice del repository:
 | `docs/sdd/` | Decisioni di progettazione, componenti, interfacce e deployment |
 | `docs/modelli/` | Modelli UML mantenuti separatamente dal RAD o dal SDD |
 | `docs/test/` | Specifiche di test, Category Partition, test frame ed esiti, quando disponibili |
-| `.github/ISSUE_TEMPLATE/`, `.github/workflows/` | Spazi previsti per i moduli delle Issue e le automazioni. Al momento contengono soltanto README |
+| `.github/ISSUE_TEMPLATE/`, `.github/workflows/` | Modulo della Issue e automazioni; il Pianificatore usa Actions + Copilot CLI, gli altri agenti restano su gh-aw |
 
 Attualmente sono presenti i README documentali e lo scheletro applicativo, ma non RAD, SDD, ODD, diagrammi, Category Partition o test frame. Non sono presenti test automatici applicativi; `src/test/java/` contiene soltanto un segnaposto. Per gli artefatti necessari mancanti chiedi il riferimento esterno alla versione approvata. La presenza di una specifica nel repository non implica la sua approvazione: verifica versione e riferimento dell’approvazione per ogni artefatto pertinente.
 
