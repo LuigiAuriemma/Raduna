@@ -1,4 +1,4 @@
-const test = require('node:test');
+﻿const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -10,9 +10,9 @@ const publish = require('./publish');
 
 const sample = {number: 42, title: 'Task', body: 'YouTrack: C16-42'};
 const input = {issue: sample, repository: 'team/Raduna', source_sha: 'a'.repeat(40), fingerprint: guard.fingerprint(sample)};
-const headings = ['Obiettivo', 'YouTrack, WP, requisito e fonti', 'Verifiche dei modelli', 'File e metodi',
+const headings = ['Obiettivo', 'Riferimenti e fonti', 'Verifiche dei modelli', 'File e metodi',
   'Attività', 'Test frame ed esiti', 'Criteri di accettazione', 'Controlli', 'Rischi', 'Limiti proposti', 'Decisioni pendenti'];
-const plan = 'Stato: **bloccato**' + headings.map(heading =>
+const plan = headings.map(heading =>
   `\n\n### ${heading}\n\nRiferimento verificato o decisione richiesta.`).join('');
 
 test('estrae solo la risposta finale da eventi Copilot completi', () => {
@@ -23,7 +23,7 @@ test('estrae solo la risposta finale da eventi Copilot completi', () => {
     {type: 'result', exitCode: 0}
   ];
   const raw = events.map(event => JSON.stringify(event)).join('\n');
-  assert.match(validate(extract(raw), input), /Stato: \*\*bloccato\*\*/);
+  assert.match(validate(extract(raw), input), /### Obiettivo/);
   assert.throws(() => validate(extract(events.map(event => JSON.stringify(event.type === 'assistant.message' && event.data.phase === 'final_answer' ? {...event, data: {...event.data, content: 'Verifico soltanto'}} : event)).join('\n')), input));
   assert.throws(() => extract(events.slice(0, -1).map(JSON.stringify).join('\n')));
   assert.throws(() => extract(events.slice(0, -2).concat({type: 'result', exitCode: 0}).map(JSON.stringify).join('\n')));
@@ -47,9 +47,9 @@ test('estrae solo la risposta finale da eventi Copilot completi', () => {
   ].map(JSON.stringify).join('\n')));
 });
 
-test('il validatore accetta un blocco esplicito e rifiuta output incompleto o credenziali', () => {
+test('il validatore accetta il piano e rifiuta output incompleto o credenziali', () => {
   const body = validate(plan, input);
-  assert.match(body, /Stato: \*\*bloccato\*\*/);
+  assert.match(body, /### Obiettivo/);
   assert.match(body, /approvare esplicitamente/);
   assert.throws(() => validate(plan.replace('### File e metodi', '### Mancante'), input));
   assert.throws(() => validate(plan + 'ghp_' + 'x'.repeat(30), input));
@@ -59,7 +59,7 @@ test('il validatore accetta un blocco esplicito e rifiuta output incompleto o cr
   assert.throws(() => validate(plan.replace('### File e metodi', '### File e metodi\n\n# Titolo'), input));
   assert.throws(() => validate(plan + '\n\n### Extra\n\nTesto', input));
   assert.throws(() => validate(plan.replace('Riferimento verificato o decisione richiesta.', 'x'.repeat(3001)), input));
-  assert.match(validate(plan.replace('Stato: **bloccato**', 'Stato: **proposta**'), input), /Stato: \*\*proposta\*\*/);
+  assert.throws(() => validate('Stato: **proposta**\n' + plan, input));
 });
 
 test('il guard evita una seconda chiamata Copilot', async () => {

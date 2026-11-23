@@ -9,20 +9,12 @@ function allowedPath(file) {
 }
 function approval(issue, comments, appliedAt) {
   const plan = comments.filter(isPlan).at(-1);
-  if (!plan || !plan.body.startsWith('<!-- raduna-piano-v1:' + issue.number + ':' + fingerprint(issue) + ' -->') ||
-      !/^Stato: \*\*proposta\*\*/m.test(plan.body)) throw Error('Serve un piano corrente in stato proposta.');
-  const pending = comments.some(c => c.id > plan.id && isTM(issue, c.user.login) && /^Rivedi il piano:/i.test(c.body));
-  if (pending) throw Error('Una revisione del piano è ancora pendente.');
-  const version = comments.filter(isPlan).length;
-  const ok = comments.findLast(c => c.id > plan.id && isTM(issue, c.user.login) &&
-    ['Approvo il piano ' + plan.html_url, 'Approvo il piano v' + version + ' ' + plan.html_url].includes(c.body.trim()) &&
-    c.created_at <= appliedAt && c.updated_at <= appliedAt && plan.updated_at <= c.created_at);
-  if (!ok) throw Error('Il TM assegnato deve commentare «Approvo il piano ' + plan.html_url + '» prima di applicare fase:implementazione.');
-  const section = plan.body.split('\n### File e metodi\n')[1]?.split('\n### ')[0];
-  const paths = (section || '').match(/src\/main\/[\w.\/-]+/g) || [];
-  return {plan, ok, paths: paths.filter(p => allowedPath(p) && app.test(p))};
+  if (!plan || !plan.body.startsWith('<!-- raduna-piano-v1:' + issue.number + ':' + fingerprint(issue) + ' -->'))
+    throw Error('Serve un piano corrente per questa Issue.');
+  if (!plan.updated_at || plan.updated_at > appliedAt) throw Error('Applicare fase:implementazione dopo il piano corrente.');
+  return plan;
 }
-function validateResult(raw, role, approved) {
+function validateResult(raw, role) {
   if (Buffer.byteLength(raw) > 256 * 1024 || secret.test(raw)) throw Error('Risposta troppo grande o riservata.');
   let r;
   try { r = JSON.parse(raw); } catch { throw Error('Risposta Copilot non in formato JSON.'); }
@@ -32,7 +24,7 @@ function validateResult(raw, role, approved) {
   const seen = new Set();
   for (const f of r.files) {
     if (!f || !allowedPath(f.path) || seen.has(f.path) || typeof f.content !== 'string' || !f.content.trim() ||
-        !(role === 'implementatore' ? app.test(f.path) && approved.includes(f.path) : role === 'tester' && tests.test(f.path)))
+        !(role === 'implementatore' ? app.test(f.path) : role === 'tester' && tests.test(f.path)))
       throw Error('Modifica fuori ambito o contenuto non valido.');
     seen.add(f.path);
   }

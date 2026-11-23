@@ -19,7 +19,7 @@ async function snapshot({github, context}, role, number) {
   const events = await github.paginate(issues.listEvents, {...repo, issue_number: number, per_page: 100});
   const labelEvent = events.findLast(e => e.event === 'labeled' && e.label?.name === 'fase:implementazione');
   if (!labelEvent || !isTM(issue, labelEvent.actor.login)) throw Error('Applicare fase:implementazione come TM assegnato.');
-  const {plan, ok, paths} = approval(issue, comments, labelEvent.created_at);
+  const plan = approval(issue, comments, labelEvent.created_at);
   const branch = branchName(number);
   const base = context.payload.repository.default_branch;
   const prs = (await github.rest.pulls.list({...repo, head: repo.owner + ':' + branch, base, state: 'all'})).data;
@@ -30,21 +30,21 @@ async function snapshot({github, context}, role, number) {
   const key = role === 'implementatore' ? String(plan.id) : sha;
   const done = comments.find(c => bot(c) && c.body.startsWith(tag(role, key)));
   const payload = {issue: {number, title: issue.title, body: issue.body}, plan: plan.body,
-    planUrl: plan.html_url, approvalUrl: ok.html_url};
+    planUrl: plan.html_url, approvalUrl: issue.html_url};
   if (role === 'tester') {
     if (!comments.some(c => bot(c) && c.body.startsWith('<!-- raduna-revisore:'))) throw Error('Attendere il rapporto del Revisore sulla Draft PR.');
     // Only the task specifications and the TM-provided test brief enter the tester session.
     delete payload.plan;
     payload.testBrief = pr.body?.split('## Input per il Tester')[1] || '';
   }
-  const stamp = createHash('sha256').update(JSON.stringify([role, sha, plan.body, ok.id, ok.body, payload])).digest('hex');
-  const receiptTag = tag(role + '-commit', plan.id + '-' + ok.id);
+  const stamp = createHash('sha256').update(JSON.stringify([role, sha, plan.body, labelEvent.id, labelEvent.created_at, payload])).digest('hex');
+  const receiptTag = tag(role + '-commit', plan.id + '-' + labelEvent.id);
   const receipt = comments.findLast(c => bot(c) && c.body.startsWith(receiptTag + '\n'));
   const saved = receipt?.body.split('\n');
   const pending = saved && /^[a-f0-9]{40}$/.test(saved[1]) && /^[a-f0-9]{40}$/.test(saved[2]) &&
     (role === 'implementatore' && !pr || role === 'tester' && (sha === saved[1] || sha === saved[2])) ?
     {parent:saved[1], head:saved[2], report:saved.slice(3).join('\n')} : null;
-  return {number, base, branch, pr, sha, paths, key, done, stamp, payload, comments, receiptTag, pending};
+  return {number, base, branch, pr, sha, key, done, stamp, payload, comments, receiptTag, pending};
 }
 async function comment(env, number, marker, text) {
   const {github, context} = env;
