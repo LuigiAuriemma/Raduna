@@ -295,8 +295,8 @@ Raduna/
 - `src/main/java/`: codice applicativo Java.
 - `src/main/resources/`: configurazione, template Thymeleaf e risorse statiche.
 - `src/test/java/`: codice dei test automatici Java.
-- `.github/workflows/`: spazio riservato ai futuri workflow GitHub Actions.
-- `.github/ISSUE_TEMPLATE/`: spazio riservato ai futuri template delle issue.
+- `.github/workflows/`: pipeline dei quattro agenti e CI Maven.
+- `.github/ISSUE_TEMPLATE/`: modulo del task agentico.
 - `.github/agents/`: profili Copilot per pianificazione, implementazione, test e revisione.
 
 Le cartelle ancora vuote contengono un file `.gitkeep` per essere conservate in Git.
@@ -305,5 +305,4 @@ Il punto di avvio Spring Boot è in `src/main/java/it/unisa/c16/raduna/RadunaApp
 ## Collaborazione
 
 La pipeline condivisa usa GitHub Copilot Student con i ruoli definiti in `.github/agents/`.
-Il flusso concordato comprende piano, approvazione umana, implementazione, test indipendenti, CI e revisione umana.
-I workflow di CI e le protezioni GitHub devono ancora essere configurati. Il merge e l'accettazione restano sotto responsabilità umana.
+La [guida operativa](.github/agentic/OPERATIONS.md) descrive il piano versionato, l'approvazione del TM, la revisione immediata della Draft PR, i test avviati dalla Issue e la CI sul commit dei test. La verifica dei risultati, il merge e l'accettazione spettano al team secondo `AGENTS.md`.

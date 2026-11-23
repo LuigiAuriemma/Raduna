@@ -23,7 +23,7 @@
 - Rapporto di confronto con i modelli:
 - L'autore sa spiegare il codice:
 
-La PR resta in bozza fino ai controlli previsti. La modalità staged non pubblica
-la PR. Solo una persona può effettuare merge dopo CI positiva sullo SHA corrente
+La PR resta in bozza fino ai controlli previsti.
+Solo una persona può effettuare merge dopo CI positiva sullo SHA corrente
 e approvazione umana diversa dall'autore. Il TM aggiorna la tracciabilità e lo
 stato Da verificare; solo i PM registrano Completato su YouTrack.

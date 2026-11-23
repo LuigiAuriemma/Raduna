@@ -1,0 +1,50 @@
+name: Raduna - revisore
+on:
+  workflow_call:
+    inputs:
+      issue: {type: number, required: true}
+    secrets:
+      COPILOT_GITHUB_TOKEN: {required: true}
+  issue_comment:
+    types: [created]
+permissions: {}
+concurrency:
+  group: raduna-revisore-${{ inputs.issue || github.event.issue.number || github.run_id }}-${{ (inputs.issue > 0 || (startsWith(github.event.comment.body, 'Rivedi il codice:') && !github.event.issue.pull_request && contains(github.event.issue.labels.*.name, 'task-agente'))) && 'fase' || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  genera:
+    if: inputs.issue > 0 || (startsWith(github.event.comment.body, 'Rivedi il codice:') && !github.event.issue.pull_request && contains(github.event.issue.labels.*.name, 'task-agente'))
+    uses: ./.github/workflows/genera-agente.yml
+    permissions: {contents: read, issues: read, pull-requests: read}
+    with:
+      role: revisore
+      issue: ${{ inputs.issue || github.event.issue.number }}
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+  pubblica:
+    needs: genera
+    if: "!cancelled() && needs.genera.result != 'skipped' && needs.genera.outputs.skip != 'true'"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {contents: read, issues: write, pull-requests: read}
+    outputs:
+      pr: ${{ steps.publish.outputs.pr }}
+      sha: ${{ steps.publish.outputs.sha }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with: {persist-credentials: false}
+      - if: needs.genera.result == 'success' && needs.genera.outputs.stamp != ''
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: risultato-revisore-${{ github.run_id }}
+          path: ${{ runner.temp }}/result
+      - id: publish
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        env:
+          ROLE: revisore
+          ISSUE: ${{ inputs.issue || github.event.issue.number }}
+          JOB_RESULT: ${{ needs.genera.result }}
+          STAMP: ${{ needs.genera.outputs.stamp }}
+          REASON: ${{ needs.genera.outputs.reason }}
+        with:
+          script: await require('./.github/agentic/delivery/publish')({github, context, core})

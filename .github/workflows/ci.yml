@@ -2,26 +2,67 @@ name: Raduna CI
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  workflow_call:
+    inputs:
+      sha: {type: string, required: true}
+      issue: {type: number, required: true}
 permissions:
   contents: read
 concurrency:
-  group: raduna-ci-${{ github.event.pull_request.number }}
+  group: raduna-ci-${{ github.event.pull_request.number || inputs.issue }}-${{ inputs.sha || github.event.pull_request.head.sha }}
   cancel-in-progress: true
 jobs:
+  fase:
+    runs-on: ubuntu-24.04
+    permissions: {issues: read}
+    outputs:
+      run: ${{ steps.gate.outputs.result }}
+    steps:
+      - id: gate
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        env:
+          TEST_SHA: ${{ inputs.sha }}
+        with:
+          script: |
+            if (process.env.TEST_SHA) return true;
+            const pr = context.payload.pull_request;
+            const match = /^raduna\/issue-([1-9]\d*)$/.exec(pr.head.ref);
+            if (!match || pr.head.repo.full_name !== context.payload.repository.full_name) return true;
+            const notes = await github.paginate(github.rest.issues.listComments, {...context.repo, issue_number:Number(match[1]), per_page:100});
+            return notes.some(c => c.user.login === 'github-actions[bot]' && c.body.startsWith('<!-- raduna-tester:'));
   verify:
-    if: ${{ false && github.event_name == 'pull_request' }}
+    needs: fase
+    if: needs.fase.outputs.run == 'true'
     name: Maven verify (JDK 25)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ inputs.sha || github.event.pull_request.head.sha }}
           persist-credentials: false
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: '25'
+          cache: ''
       - name: Verifica Docker per Testcontainers
         run: docker info
       - name: Build, test e packaging
         run: sh ./mvnw -B -ntp clean verify
+  esito:
+    concurrency: raduna-esito-raduna/issue-${{ inputs.issue || github.run_id }}
+    needs: verify
+    if: always() && inputs.issue > 0
+    runs-on: ubuntu-24.04
+    permissions: {contents: read, issues: write, pull-requests: read, statuses: write}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with: {persist-credentials: false}
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        env:
+          ISSUE: ${{ inputs.issue }}
+          TEST_SHA: ${{ inputs.sha }}
+          OUTCOME: ${{ needs.verify.result }}
+        with:
+          script: await require('./.github/agentic/delivery/ci-report')({github, context, core})

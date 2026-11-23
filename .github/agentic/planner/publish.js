@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const {fingerprint, labels, marker} = require('./guard');
+const {revision} = require('./revisions');
 
 module.exports = async ({github, context, core}) => {
   const n = context.issue.number;
@@ -20,8 +21,9 @@ module.exports = async ({github, context, core}) => {
     return;
   }
   const comments = await github.paginate(github.rest.issues.listComments, {...context.repo, issue_number: n, per_page: 100});
-  if (comments.some(c => c.user?.login === 'github-actions[bot]' && (c.body || '').startsWith(marker))) {
-    core.notice('Piano già pubblicato.');
+  const update = revision(issue, comments, context.payload?.comment);
+  if (!update || JSON.stringify(update) !== JSON.stringify(input.revision || {})) {
+    core.notice('Piano o richiesta cambiati durante la generazione.');
     return;
   }
   await github.rest.issues.createComment({...context.repo, issue_number: n, body});

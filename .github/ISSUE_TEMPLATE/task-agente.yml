@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Il Pianificatore può pubblicare un piano sulla Issue; gli altri agenti restano disabilitati.
+        La Issue raccoglie piano, approvazione del TM, Draft PR, revisione, test e stato CI.
         Non inserire segreti o dati personali. Una label non approva il piano.
   - type: input
     id: youtrack
@@ -47,6 +47,6 @@ body:
     id: tm
     attributes:
       label: TM responsabile
-      description: Il TM assegnato commenta sulla Issue con il link al piano approvato, poi aggiunge fase:implementazione.
+      description: Assegna il TM anche nel campo Assignees. Dopo il piano il TM commenta «Approvo il piano URL» con il link al commento e aggiunge fase:implementazione.
     validations:
       required: true
