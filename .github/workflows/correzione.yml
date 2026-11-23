@@ -140,7 +140,7 @@ jobs:
             cat AGENTS.md .github/agents/implementatore.agent.md
             echo 'Sei l Implementatore. Correggi o reimplementa nell ambito del piano il problema riportato dall assegnatario sulla Draft PR esistente.'
             echo 'La autorizzazione AUTORIZZA PIANO: non richiede una lista di file; segui rigorosamente i requisiti e il piano approvati.'
-            echo 'Puoi correggere o reimplementare nei file applicativi backend/, frontend/ e nella documentazione ordinaria (README.md, docs/).'
+            echo 'Puoi correggere o reimplementare nei file applicativi src/* e nella documentazione ordinaria (README.md, docs/).'
             echo 'Non modificare test, Test Frame, governance, modelli RAD/SDD, PDF, segreti, .env o dipendenze non approvate.'
             echo 'Non modificare i requisiti, non indebolire le asserzioni e non eseguire shell.'
             echo 'Non fare commit, push o PR: gli step successivi controllano il diff.'
@@ -177,7 +177,7 @@ jobs:
           fi
           while IFS= read -r -d '' file; do
             case "$file" in
-              backend/*|frontend/*|README.md|docs/*) ;;
+              src/*|README.md|docs/*) ;;
               *) echo "::error::File fuori dalle aree consentite: $file"; exit 1 ;;
             esac
             case "$file" in
@@ -186,28 +186,19 @@ jobs:
             esac
           done < <(git diff --cached --name-only -z)
       - uses: actions/setup-java@v4
-        if: ${{ steps.guard.outputs.skip == 'false' && hashFiles('backend/pom.xml') != '' }}
+        if: ${{ steps.guard.outputs.skip == 'false' && hashFiles('pom.xml') != '' }}
         with:
           distribution: temurin
-          java-version-file: backend/.java-version
+          java-version: '25'
           cache: maven
-          cache-dependency-path: backend/pom.xml
-      - uses: actions/setup-node@v4
-        if: ${{ steps.guard.outputs.skip == 'false' && hashFiles('frontend/package.json') != '' }}
-        with:
-          node-version-file: frontend/.nvmrc
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: pom.xml
       - name: Registra build e test disponibili senza mascherare gli errori
         if: ${{ steps.guard.outputs.skip == 'false' }}
         run: |
           set -uo pipefail
           status=0
-          if [ -f backend/pom.xml ]; then
-            (cd backend && mvn -B verify) || status=1
-          fi
-          if [ -f frontend/package.json ]; then
-            (cd frontend && npm ci && npm run build && npm run test:ci) || status=1
+          if [ -f pom.xml ]; then
+            sh ./mvnw -B verify || status=1
           fi
           echo "$status" > "$RUNNER_TEMP/check-status.txt"
           if [ "$status" -ne 0 ]; then

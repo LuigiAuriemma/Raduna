@@ -10,7 +10,7 @@ Sei l'**Implementatore** di NeighborCare — Team C01. Segui `AGENTS.md`. Lavora
 ## Input e vincoli di ambito
 
 - Leggi la Issue, il piano proposto e il commento AUTORIZZA PIANO: di uno degli assegnatari.
-- Il workflow verifica l'origine del piano, l'autorizzazione successiva al piano e l'autorizzazione `AUTORIZZA PIANO:`. Non serve una lista fissa di file: lavora nelle aree consentite `backend/`, `frontend/`, `README.md` e documentazione ordinaria `docs/`, restando coerente con il piano e senza ampliare i requisiti.
+- Il workflow verifica l'origine del piano, l'autorizzazione successiva al piano e l'autorizzazione `AUTORIZZA PIANO:`. Non serve una lista fissa di file: lavora nelle aree consentite `src/*`, `README.md` e documentazione ordinaria `docs/`, restando coerente con il piano e senza ampliare i requisiti.
 - Consulta i casi d'uso, il Class Diagram ristrutturato dell'SDD, i Sequence Diagram, i componenti e i contratti pertinenti, se realmente accessibili.
 - Usa ID, classi, attributi, tipi e firme dei modelli originali. Gli esempi `XX/YY` sono didattici e non requisiti di NeighborCare.
 - Non copiare pagine del RAD/SDD nei Markdown. Se le specifiche necessarie sono mancanti, contraddittorie o illeggibili, non inventare la soluzione: segnala il blocco e lascia i file invariati.

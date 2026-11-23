@@ -110,7 +110,7 @@ jobs:
           {
             echo 'Sei l Implementatore di NeighborCare. Segui AGENTS.md.'
             echo 'AUTORIZZA PIANO: approva l ultimo piano. Il piano e la Issue delimitano le funzionalita richieste, non una lista di file.'
-            echo 'Puoi creare o aggiornare i file necessari in backend/, frontend/, README.md e documentazione ordinaria in docs/.'
+            echo 'Puoi creare o aggiornare i file necessari in src/*, README.md e documentazione ordinaria in docs/.'
             echo 'NON modificare .github/, AGENTS.md, .gitignore, modelli RAD/SDD, Test Frame, test applicativi, PDF, file .env, segreti, dipendenze non previste nel piano.'
             echo 'Per estendere i requisiti, la architettura o ambiti non previsti, fermati e richiedi una nuova pianificazione.'
             echo 'Leggi gli artefatti reali citati nella Issue solo se presenti: non copiarne pagine in Markdown e non inventare contenuto mancante.'
@@ -143,7 +143,7 @@ jobs:
           }
           while IFS= read -r -d '' file; do
             case "$file" in
-              backend/*|frontend/*|README.md|docs/*) ;;
+              src/*|README.md|docs/*) ;;
               *) echo "::error::File fuori dalle aree consentite: $file"; exit 1 ;;
             esac
             case "$file" in
@@ -152,34 +152,19 @@ jobs:
             esac
           done < <(git diff --cached --name-only -z)
       - uses: actions/setup-java@v4
-        if: ${{ hashFiles('backend/pom.xml') != '' }}
+        if: ${{ hashFiles('pom.xml') != '' }}
         with:
           distribution: temurin
-          java-version-file: backend/.java-version
+          java-version: '25'
           cache: maven
-          cache-dependency-path: backend/pom.xml
-      - uses: actions/setup-node@v4
-        if: ${{ hashFiles('frontend/package.json') != '' }}
-        with:
-          node-version-file: frontend/.nvmrc
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: pom.xml
       - name: Compila e verifica il codice prima della PR, se inizializzato
         run: |
           set -euo pipefail
-          if [ -f backend/pom.xml ]; then
-            test -s backend/.java-version || { echo "::error::Versione Java non approvata o assente"; exit 1; }
-            (cd backend && mvn -B verify)
+          if [ -f pom.xml ]; then
+            sh ./mvnw -B verify
           else
-            echo "::notice::Backend non inizializzato: Maven N/A."
-          fi
-          if [ -f frontend/package.json ]; then
-            test -s frontend/.nvmrc && test -s frontend/package-lock.json || {
-              echo "::error::Bootstrap frontend incompleto"; exit 1;
-            }
-            (cd frontend && npm ci && npm run build && npm run test:ci)
-          else
-            echo "::notice::Frontend non inizializzato: npm N/A."
+            echo "::notice::Progetto Maven non inizializzato: Maven N/A."
           fi
       - name: Verifica diff e pubblica solo una Draft PR
         env:
@@ -204,7 +189,7 @@ jobs:
           fi
           while IFS= read -r -d '' file; do
             case "$file" in
-              backend/*|frontend/*|README.md|docs/*) ;;
+              src/*|README.md|docs/*) ;;
               *) echo "::error::File fuori dalle aree consentite: $file"; exit 1 ;;
             esac
             case "$file" in

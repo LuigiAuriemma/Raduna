@@ -49,47 +49,24 @@ jobs:
           set -euo pipefail
           while IFS= read -r file; do
             case "$file" in
-              backend/src/test/*|frontend/tests/*|frontend/src/*.test.*|frontend/src/*.spec.*)
+              src/test/*)
                 if git cat-file -e "origin/${BASE_REF}:$file" 2>/dev/null; then
                   echo "::warning::Test esistente modificato: $file — controllare che non siano state indebolite le asserzioni."
                 fi ;;
             esac
           done < <(git diff --name-only "origin/${BASE_REF}...HEAD")
       - uses: actions/setup-java@v4
-        if: ${{ hashFiles('backend/pom.xml') != '' }}
+        if: ${{ hashFiles('pom.xml') != '' }}
         with:
           distribution: temurin
-          java-version-file: backend/.java-version
+          java-version: '25'
           cache: maven
-          cache-dependency-path: backend/pom.xml
-      - name: Verifica reale del backend quando inizializzato
+          cache-dependency-path: pom.xml
+      - name: Verifica reale del progetto Maven
         run: |
           set -euo pipefail
-          if [ -f backend/pom.xml ]; then
-            test -s backend/.java-version || {
-              echo "::error::Bootstrap Java incompleto: manca backend/.java-version"; exit 1;
-            }
-            (cd backend && mvn -B verify)
+          if [ -f pom.xml ]; then
+            sh ./mvnw -B verify
           else
-            echo "::notice::Backend non inizializzato: nessuna build o test Maven eseguito."
-          fi
-      - uses: actions/setup-node@v4
-        if: ${{ hashFiles('frontend/package.json') != '' }}
-        with:
-          node-version-file: frontend/.nvmrc
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - name: Verifica reale del frontend quando inizializzato
-        run: |
-          set -euo pipefail
-          if [ -f frontend/package.json ]; then
-            test -s frontend/.nvmrc && test -s frontend/package-lock.json || {
-              echo "::error::Bootstrap frontend incompleto: mancano versioni o lockfile"; exit 1;
-            }
-            cd frontend
-            npm ci
-            npm run build
-            npm run test:ci
-          else
-            echo "::notice::Frontend non inizializzato: nessuna build o test frontend eseguito."
+            echo "::notice::Progetto Maven non inizializzato: nessuna build o test eseguito."
           fi
