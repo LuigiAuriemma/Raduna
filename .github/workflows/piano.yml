@@ -1,0 +1,95 @@
+name: Raduna - Piano Copilot CLI
+
+on:
+  issues:
+    types: [labeled]
+
+permissions: {}
+
+concurrency:
+  group: raduna-piano-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    if: >-
+      github.event.label.name == 'fase:piano' &&
+      github.event.issue.state == 'open' &&
+      !github.event.issue.pull_request &&
+      contains(github.event.issue.labels.*.name, 'task-agente')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: read
+    outputs:
+      ready: ${{ steps.validate.outputs.ready }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Verifica fase, autorizzazione e duplicati
+        id: guard
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            await require('./.github/agentic/planner/guard')({github, context, core});
+      - name: Genera piano in repository di sola lettura
+        if: steps.guard.outputs.run == 'true'
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$COPILOT_GITHUB_TOKEN" ]; then echo 'Credenziale Copilot non configurata'; exit 1; fi
+          mkdir -p "$RUNNER_TEMP/planner-output"
+          cp "$RUNNER_TEMP/raduna-planner-input.json" "$RUNNER_TEMP/planner-output/input.json"
+          docker run --rm --user "$(id -u):$(id -g)" --read-only \
+            --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 \
+            --tmpfs /tmp:rw,nosuid,nodev,size=256m \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/work,readonly" \
+            --mount "type=bind,src=$RUNNER_TEMP/planner-output,dst=/output" \
+            --env COPILOT_GITHUB_TOKEN --env COPILOT_AUTO_UPDATE=false \
+            --workdir /work \
+            node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da \
+            sh /work/.github/agentic/planner/run.sh
+      - name: Valida il piano
+        id: validate
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          node .github/agentic/planner/validate.js \
+            "$RUNNER_TEMP/planner-output/input.json" \
+            "$RUNNER_TEMP/planner-output/raw.json" \
+            "$RUNNER_TEMP/planner-output/plan.md"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+      - name: Consegna solo il piano validato
+        if: steps.validate.outputs.ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: raduna-piano-${{ github.event.issue.number }}-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/planner-output/input.json
+            ${{ runner.temp }}/planner-output/plan.md
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    needs: generate
+    if: needs.generate.outputs.ready == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: raduna-piano-${{ github.event.issue.number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/planner-artifact
+      - name: Ricontrolla e pubblica sulla Issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            await require('./.github/agentic/planner/publish')({github, context, core});
