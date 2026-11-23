@@ -315,4 +315,4 @@ Il punto di avvio Spring Boot è in `src/main/java/it/unisa/c16/raduna/RadunaApp
 ## Collaborazione
 
 La pipeline condivisa usa GitHub Copilot Student con i ruoli definiti in `.github/agents/`.
-La [guida operativa](.github/agentic/OPERATIONS.md) descrive il piano versionato, l'approvazione del TM, la revisione immediata della Draft PR, i test avviati dalla Issue e la CI sul commit dei test. La verifica dei risultati, il merge e l'accettazione spettano al team secondo `AGENTS.md`.
+La guida operativa descrive il piano versionato, l'approvazione del TM, la revisione immediata della Draft PR, i test avviati dalla Issue e la CI sul commit dei test. La verifica dei risultati, il merge e l'accettazione spettano al team secondo `AGENTS.md`.
