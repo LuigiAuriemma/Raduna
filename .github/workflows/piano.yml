@@ -64,7 +64,7 @@ jobs:
         run: |
           node .github/agentic/planner/validate.js \
             "$RUNNER_TEMP/planner-output/input.json" \
-            "$RUNNER_TEMP/planner-output/raw.json" \
+            "$RUNNER_TEMP/planner-output/raw.md" \
             "$RUNNER_TEMP/planner-output/plan.md"
           echo 'ready=true' >> "$GITHUB_OUTPUT"
       - name: Consegna solo il piano validato

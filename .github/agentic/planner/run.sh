@@ -10,5 +10,6 @@ cd /work
 /output/npm/bin/copilot -p "$(cat /output/prompt.txt)" -s --model=auto --no-ask-user \
   --no-auto-update --disable-builtin-mcps --disable-mcp-server=computer-use \
   --available-tools='view,grep,glob' --deny-tool=write --deny-tool=edit \
-  --deny-tool=shell --max-ai-credits=100 > /output/raw.json
-test -s /output/raw.json
+  --deny-tool=shell --max-ai-credits=100 --output-format=json > /output/events.jsonl
+test -s /output/events.jsonl
+node /work/.github/agentic/planner/extract.js /output/events.jsonl /output/raw.md
