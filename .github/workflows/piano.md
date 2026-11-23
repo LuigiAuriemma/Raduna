@@ -7,7 +7,8 @@ on:
   status-comment: false
 # Blocco locale intenzionale: budget e attivazione devono essere approvati dal PM.
 if: "github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'fase:piano' && github.event.issue.state == 'open' && contains(github.event.issue.labels.*.name, 'task-agente')"
-engine: copilot
+engine: copilot 
+model: router/balanced
 imports:
   - .github/agents/pianificatore.agent.md
 permissions:
@@ -16,7 +17,7 @@ permissions:
 timeout-minutes: 8
 # Proposta in AI credits (non token, richieste premium o euro): non approvata.
 max-ai-credits: 100
-max-daily-ai-credits: 300
+max-daily-ai-credits: 200
 network:
   allowed: [defaults]
 tools:
