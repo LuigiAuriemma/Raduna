@@ -1,0 +1,54 @@
+name: Generazione Copilot Raduna
+on:
+  workflow_call:
+    inputs:
+      role: {required: true, type: string}
+      issue: {required: true, type: number}
+    secrets:
+      COPILOT_GITHUB_TOKEN: {required: true}
+    outputs:
+      stamp: {value: '${{ jobs.generate.outputs.stamp }}'}
+      reason: {value: '${{ jobs.generate.outputs.reason }}'}
+      skip: {value: '${{ jobs.generate.outputs.skip }}'}
+permissions: {}
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions: {contents: read, issues: read, pull-requests: read}
+    env:
+      ROLE: ${{ inputs.role }}
+      ISSUE: ${{ inputs.issue }}
+    outputs:
+      stamp: ${{ steps.prepare.outputs.stamp }}
+      reason: ${{ steps.prepare.outputs.reason }}
+      skip: ${{ steps.prepare.outputs.skip }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with: {persist-credentials: false}
+      - id: prepare
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          script: await require('./.github/agentic/delivery/prepare')({github, context, core})
+      - if: steps.prepare.outputs.sha != ''
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ steps.prepare.outputs.sha }}
+          path: snapshot
+          persist-credentials: false
+      - if: steps.prepare.outputs.sha != ''
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+        run: bash .github/agentic/delivery/run.sh
+      - if: steps.prepare.outputs.sha != ''
+        name: Verifica schema, dimensione e percorsi prima della consegna
+        run: |
+          node -e "const fs=require('fs'), dir=process.env.RUNNER_TEMP; require('./.github/agentic/delivery/policy').validateResult(fs.readFileSync(dir+'/result/result.json','utf8'),process.env.ROLE,JSON.parse(fs.readFileSync(dir+'/approved.json','utf8')))"
+      - if: steps.prepare.outputs.sha != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: risultato-${{ inputs.role }}-${{ github.run_id }}
+          overwrite: true
+          path: ${{ runner.temp }}/result/result.json
+          if-no-files-found: error
+          retention-days: 1

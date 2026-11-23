@@ -26,7 +26,8 @@ function validate(raw, input) {
   };
   const body = [
     `<!-- raduna-piano-v1:${input.issue.number}:${input.fingerprint} -->`,
-    '## Piano proposto dal Pianificatore AI',
+    ...(input.revision?.request ? [`<!-- richiesta-piano:${input.revision.request} -->`,
+      `## Piano v${input.revision.version} — [richiesta del TM](https://github.com/${input.repository}/issues/${input.issue.number}#issuecomment-${input.revision.request})`] : ['## Piano proposto dal Pianificatore AI (v1)']),
     `Stato: **${plan.stato}**. Fonte: Issue #${input.issue.number}; commit ${input.source_sha}.`,
     ...fields.map(field => `### ${headings[field]}\n\n${plan[field].trim()}`),
     'Il TM assegnato deve verificare e approvare esplicitamente questo piano prima dell’implementazione.'

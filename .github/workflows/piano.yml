@@ -3,17 +3,19 @@ name: Raduna - Piano Copilot CLI
 on:
   issues:
     types: [labeled]
+  issue_comment:
+    types: [created]
 
 permissions: {}
 
 concurrency:
-  group: raduna-piano-${{ github.event.issue.number }}
+  group: raduna-piano-${{ github.event.issue.number }}-${{ (github.event.label.name == 'fase:piano' || startsWith(github.event.comment.body, 'Rivedi il piano:')) && 'piano' || github.run_id }}
   cancel-in-progress: false
 
 jobs:
   generate:
     if: >-
-      github.event.label.name == 'fase:piano' &&
+      (github.event.label.name == 'fase:piano' || startsWith(github.event.comment.body, 'Rivedi il piano:')) &&
       github.event.issue.state == 'open' &&
       !github.event.issue.pull_request &&
       contains(github.event.issue.labels.*.name, 'task-agente')
