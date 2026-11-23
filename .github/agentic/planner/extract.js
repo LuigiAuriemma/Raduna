@@ -3,17 +3,19 @@ const fs = require('node:fs');
 function extract(raw) {
   const lines = raw.trim().split(/\r?\n/);
   let final;
+  let finalTurn;
   let turnEnded = false;
   let result;
   for (const line of lines) {
     const event = JSON.parse(line);
     if (event.type === 'assistant.message' && event.data?.phase === 'final_answer') {
-      if (final !== undefined || turnEnded || result) throw Error('Risposta finale ambigua');
+      if (final !== undefined || result) throw Error('Risposta finale ambigua');
       final = event.data.content;
+      finalTurn = event.data.turnId;
     }
     if (event.type === 'assistant.turn_end') {
-      if (final === undefined || turnEnded || result) throw Error('Chiusura del turno ambigua');
-      turnEnded = true;
+      if (result || turnEnded) throw Error('Chiusura del turno ambigua');
+      if (final !== undefined && (finalTurn === undefined || event.data?.turnId === finalTurn)) turnEnded = true;
     }
     if (event.type === 'result') {
       if (!turnEnded || result) throw Error('Risultato Copilot ambiguo');
