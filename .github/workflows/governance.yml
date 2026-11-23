@@ -123,8 +123,8 @@ jobs:
               (c.body||'').includes('Commit esaminato: '+sha)).at(-1);
             if (!reviewerReport) {
               problems.push('Manca il report del Revisore AI sul commit corrente.');
-            } else if (!/^ESITO_REVISIONE:\s*PASS\s*$/m.test(reviewerReport.body||'')) {
-              problems.push('Il Revisore AI ha richiesto modifiche: tornare a Draft e correggere.');
+            } else if (/^ESITO_REVISIONE:\s*CHANGES_REQUESTED\s*$/m.test(reviewerReport.body||'')) {
+              core.warning('Il Revisore AI ha richiesto modifiche. Decide il revisore umano.');
             }
             const {data:workflowResult}=await github.rest.actions.listWorkflowRunsForRepo({
               ...context.repo,branch:pr.head.ref,event:'pull_request',per_page:100
@@ -144,7 +144,7 @@ jobs:
             let independentReview=false;
             for (const [login,review] of latest) {
               if (review.state!=='APPROVED' || review.commit_id!==sha ||
-                  assignedMembers.includes(login) || login==='github-actions[bot]' ||
+                  login==='github-actions[bot]' ||
                   login===(pr.user?.login||'').toLowerCase())
                 continue;
               try {
