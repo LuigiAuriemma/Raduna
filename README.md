@@ -205,6 +205,16 @@ JUnit, Mockito e Testcontainers sono già previsti. I futuri test MySQL con Test
 
 ## Avvio locale e smoke test
 
+### Smoke endpoint della pipeline
+
+Quando l'applicazione e' in esecuzione sulla porta 8080, il smoke endpoint e' raggiungibile senza autenticazione:
+
+```sh
+curl http://localhost:8080/pipeline-smoke
+```
+
+La risposta attesa e' esattamente `Pipeline agentica OK`.
+
 Con MySQL avviato e le tre variabili configurate, scegliere **uno** dei seguenti metodi:
 
 | Metodo | Windows / PowerShell | Linux/macOS |
