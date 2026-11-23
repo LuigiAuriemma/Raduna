@@ -1,45 +1,54 @@
-name: Task agentico Raduna
-description: Avvio controllato di un task Raduna con piano e approvazione del TM.
-title: "[Raduna] "
-labels: [task-agente]
+name: Task per agente
+description: Attività per un agente, collegata a requisiti, casi d’uso, modelli e test.
+title: "[TASK] "
+labels: ["task-agente"]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        La Issue raccoglie piano, approvazione del TM, Draft PR, revisione, test e stato CI.
-        Non inserire segreti o dati personali. Una label non approva il piano.
   - type: input
-    id: usecase
+    id: riferimenti
     attributes:
-      label: Comportamento richiesto
-      description: Descrivi un comportamento circoscritto; aggiungi ID RAD o caso d'uso quando disponibili.
+      label: ID requisito o caso d’uso
+      description: Usa ID reali del RAD; per setup o documentazione indica N/A e il motivo.
     validations:
       required: true
   - type: textarea
-    id: references
+    id: obiettivo
     attributes:
-      label: Fonti disponibili
-      description: Indica requisiti, modelli e versioni disponibili; segnala le fonti mancanti che possono influire sul task.
-    validations:
-      required: false
-  - type: textarea
-    id: frames
-    attributes:
-      label: Test frame disponibili
-      description: Indica frame, input ed esiti disponibili; se assenti, descrivi i casi da verificare nei criteri di accettazione.
-    validations:
-      required: false
-  - type: textarea
-    id: acceptance
-    attributes:
-      label: Obiettivo e criteri di accettazione
-      description: Flusso principale, eccezioni, controlli e limiti proposti di tempo e tentativi.
+      label: Descrizione e obiettivo
+      description: Descrivi il risultato richiesto e l’ambito della modifica.
     validations:
       required: true
-  - type: input
-    id: tm
+  - type: textarea
+    id: modelli
     attributes:
-      label: TM responsabile
-      description: Assegna il TM anche nel campo Assignees. Dopo aver verificato il piano, il TM aggiunge fase:implementazione per avviare l'agente.
+      label: Riferimenti ai modelli
+      description: File o link, sezioni, versioni e stato di approvazione di RAD, SDD e diagrammi pertinenti; dichiara ciò che manca.
+    validations:
+      required: true
+  - type: textarea
+    id: ambito
+    attributes:
+      label: Ambito (classi, metodi e file da modificare)
+      description: Indica l’ambito previsto; se non ancora definito, richiedine l’analisi nel piano.
+    validations:
+      required: true
+  - type: textarea
+    id: accettazione
+    attributes:
+      label: Criteri di accettazione
+      description: Risultati osservabili dalla specifica, inclusi errori e alternative pertinenti.
+    validations:
+      required: true
+  - type: textarea
+    id: test
+    attributes:
+      label: Test previsti
+      description: Test Frame e fonte degli esiti attesi; per attività documentali indica le verifiche previste.
+    validations:
+      required: true
+  - type: textarea
+    id: dipendenze
+    attributes:
+      label: Dipendenze
+      description: Issue prerequisite, impedimenti e decisioni pendenti; scrivi Nessuna se assenti.
     validations:
       required: true

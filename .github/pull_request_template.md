@@ -1,29 +1,33 @@
-## Task e ambito
+## Issue collegata
 
-- Task YouTrack / Work Package:
-- Issue GitHub:
-- Requisito / caso d'uso / priorità approvata:
-- Artefatti: percorso/link, versione, approvazione e posizioni pertinenti:
-- Piano: link al commento sulla Issue:
-- Approvazione del TM assegnato (link al commento sulla Issue):
-- File/metodi previsti e scostamenti autorizzati:
+<!-- Closes #numero se il task è concluso; altrimenti Refs #numero. -->
+Issue e UC/requisiti:
+Piano e autorizzazione del piano da un responsabile assegnato:
 
-## Verifiche ed evidenze
+## Modifiche effettuate
 
-- Frame → test → esito atteso da specifica → esito osservato:
-- Build, analisi statica, unità, integrazione e sistema:
-- CI: run e SHA verificato (non dichiarare superata senza evidenza):
-- Input per il Tester (estratti approvati e firme pubbliche), frame e link alla sua esecuzione:
-- Motivazioni delle modifiche ai test preesistenti:
-- Controlli indisponibili, interruzioni e decisioni pendenti:
+<!-- Descrivi il risultato e i file interessati. -->
 
-## Revisione umana
+## Modelli consultati
 
-- Revisore diverso dall'autore:
-- Rapporto di confronto con i modelli:
-- L'autore sa spiegare il codice:
+<!-- File/link, versione e approvazione di RAD, SDD, diagrammi e Test Frame pertinenti. -->
 
-La PR resta in bozza fino ai controlli previsti.
-Solo una persona può effettuare merge dopo CI positiva sullo SHA corrente
-e approvazione umana diversa dall'autore. Il TM aggiorna la tracciabilità e lo
-stato Da verificare; solo i PM registrano Completato su YouTrack.
+## Test eseguiti
+
+<!-- Comandi reali, Test Frame coperti, esiti ed evidenze; controlli non eseguiti e motivo. -->
+
+## Eventuali deviazioni
+
+<!-- Scostamenti dal piano, nuove dipendenze o modifiche ai modelli e relative approvazioni; oppure Nessuna. -->
+Tentativi falliti sullo stesso problema e interventi umani:
+
+## Checklist di review
+
+- [ ] Issue e artefatti pertinenti collegati; piano autorizzato da un responsabile assegnato prima delle modifiche.
+- [ ] Modifiche coerenti con requisiti e modelli approvati, nell'ambito del piano e delle aree consentite.
+- [ ] Test derivati dalla specifica; copertura dei Test Frame ed esiti effettivi riportati.
+- [ ] Modelli interessati aggiornati nella stessa PR; deviazioni e nuove dipendenze approvate.
+- [ ] Nessun segreto/dato personale aggiunto e nessun test alterato per ottenere verde.
+- [ ] responsabili assegnati capace di spiegare il risultato; review indipendente di un utente Write non assegnato (PM o TM).
+
+<!-- Per task documentali, motivare UC/test applicativi N/A. L’ultima casella si completa dopo la review. -->

@@ -1,0 +1,161 @@
+name: Governance PR
+
+# Il gate si avvia solo quando una persona conclude una review.
+# Prima della review il required check resta "Expected" e blocca il merge:
+# non viene mai segnato success/skipped solo per assenza di test o report.
+on:
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+
+jobs:
+  governance-gate:
+    name: governance-gate
+    # Non usare "if" sul job: un required check saltato risulta Success
+    # e potrebbe autorizzare un merge senza i controlli necessari.
+    # Le review COMMENTED/CHANGES_REQUESTED non conferiscono approvazione,
+    # percio il gate le valuta e resta rosso in assenza di APPROVED valida.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verifica Tester, Revisore AI e review indipendente dopo la review umana
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber=context.payload.pull_request?.number;
+            if (!prNumber) { core.setFailed('Evento senza Pull Request.'); return; }
+            const {data:pr}=await github.rest.pulls.get({...context.repo,pull_number:prNumber});
+            const sha=pr.head.sha;
+            const problems=[];
+            if (pr.state!=='open' || pr.draft) problems.push('La PR deve essere aperta e Ready for review.');
+            if (pr.base.ref!=='main' || pr.head.repo?.full_name!==context.repo.owner+'/'+context.repo.repo)
+              problems.push('La PR deve essere interna e destinata a main.');
+
+            const linked=(pr.body||'').match(/\b(?:Closes|Fixes)\s+#(\d+)\b/i);
+            const frozen=(pr.body||'').match(/^Responsabili assegnati:\s*(.+)$/m)?.[1]
+              ?.split(',').map(s=>s.trim().replace(/^@/,'').toLowerCase()).sort();
+            const approver=(pr.body||'').match(/^Autorizzante: @([A-Za-z0-9-]+)$/m)?.[1]?.toLowerCase();
+            let assignedMembers=[];
+            if (linked && frozen && approver) {
+              const {data:issue}=await github.rest.issues.get({...context.repo,issue_number:Number(linked[1])});
+              assignedMembers=(issue.assignees||[]).map(u=>u.login.toLowerCase()).sort();
+              if (issue.state!=='open' || !assignedMembers.length ||
+                  JSON.stringify(assignedMembers)!==JSON.stringify(frozen) ||
+                  !assignedMembers.includes(approver)) {
+                problems.push('Issue o assegnazione TM non coincide con la PR autorizzata.');
+              }
+            }
+            const files=await github.paginate(github.rest.pulls.listFiles,{...context.repo,pull_number:prNumber,per_page:100});
+            if (!files.length || files.length>80) problems.push('Diff vuota o superiore a 80 file.');
+            const paths=files.map(f=>f.filename);
+            const protectedPath=p=>p==='AGENTS.md'||p==='README.md'||p==='.gitignore'||
+              p.startsWith('.github/')||p==='docs/agentic-workflow-iterazioni.md';
+            // Tutte le PR richiedono una review umana indipendente. Il PM e facoltativo come revisore.
+            // Le PR manuali di governance/documentazione sono consentite a PM o TM
+            // con Write; una review umana indipendente e sempre richiesta.
+            const manualGovernance=paths.length>0 && paths.every(protectedPath) &&
+              !linked && !frozen && !pr.head.ref.startsWith('agent/issue-');
+            if (manualGovernance) {
+              const {data:authorPerm}=await github.rest.repos.getCollaboratorPermissionLevel({
+                ...context.repo,username:pr.user.login
+              });
+              if (!['write','maintain','admin'].includes(authorPerm.permission))
+                problems.push('Una PR manuale di governance richiede un autore Write.');
+            }
+            if (manualGovernance) {
+              const {data:manualReviews}=await github.rest.pulls.listReviews({
+                ...context.repo,pull_number:prNumber,per_page:100
+              });
+              const latestReview=new Map();
+              for (const review of manualReviews) latestReview.set((review.user?.login||'').toLowerCase(),review);
+              let independent=false;
+              for (const [login,review] of latestReview) {
+                if (login===(pr.user?.login||'').toLowerCase() ||
+                    review.state!=='APPROVED' || review.commit_id!==sha) continue;
+                const {data:perm}=await github.rest.repos.getCollaboratorPermissionLevel({
+                  ...context.repo,username:login
+                });
+                if (['write','maintain','admin'].includes(perm.permission)) independent=true;
+              }
+              if (!independent) problems.push('Serve un APPROVED di un revisore Write diverso dall autore.');
+              if (problems.length) { core.setFailed(problems.map(p=>'- '+p).join('\n')); return; }
+              core.notice('Governance: review umana indipendente presente. CI e CODEOWNERS restano richiesti.');
+              return;
+            }
+            if (!linked || !frozen || !approver)
+              problems.push('Mancano Closes #Issue, Autorizzante o lista degli assegnatari nella PR.');
+            const comments=await github.paginate(github.rest.issues.listComments,{...context.repo,issue_number:prNumber,per_page:100});
+
+            const testerReport=comments.filter(c=>{
+              if (c.user?.login!=='github-actions[bot]') return false;
+              const b=c.body||'';
+              return (b.startsWith('## Tester indipendente — verifica documentale') &&
+                      b.includes('Commit esaminato: '+sha)) ||
+                     (b.startsWith('## Tester indipendente — PR #'+prNumber) &&
+                      b.includes('Commit dopo il test: '+sha) &&
+                      /Risultato dei test automatici \(exit code\):\s*0\b/.test(b));
+            }).at(-1);
+            if (!testerReport) {
+              problems.push('Manca il report del Tester superato sul commit corrente.');
+            } else {
+              const id=(testerReport.body||'').match(/^Run Tester:\s*(\d+)\s*$/m)?.[1];
+              if (!id) {
+                problems.push('Report Tester privo di identificativo della run.');
+              } else {
+                try {
+                  const {data:run}=await github.rest.actions.getWorkflowRun({...context.repo,run_id:Number(id)});
+                  if (run.name!=='Tester indipendente' || run.conclusion!=='success' ||
+                      run.head_branch!==pr.head.ref)
+                    problems.push('La run del Tester non e conclusa con successo sul branch della PR.');
+                } catch (error) {
+                  problems.push('Impossibile validare la run del Tester: '+error.message);
+                }
+              }
+            }
+
+            const reviewerReport=comments.filter(c=>c.user?.login==='github-actions[bot]' &&
+              (c.body||'').startsWith('## Revisione AI — PR #'+prNumber) &&
+              (c.body||'').includes('Commit esaminato: '+sha)).at(-1);
+            if (!reviewerReport) {
+              problems.push('Manca il report del Revisore AI sul commit corrente.');
+            } else if (!/^ESITO_REVISIONE:\s*PASS\s*$/m.test(reviewerReport.body||'')) {
+              problems.push('Il Revisore AI ha richiesto modifiche: tornare a Draft e correggere.');
+            }
+            const {data:workflowResult}=await github.rest.actions.listWorkflowRunsForRepo({
+              ...context.repo,branch:pr.head.ref,event:'pull_request',per_page:100
+            });
+            const reviewerRun=(workflowResult.workflow_runs||[]).find(r=>
+              r.name==='Revisore' && r.head_sha===sha &&
+              r.status==='completed' && r.conclusion==='success'
+            );
+            if (!reviewerRun) problems.push('Manca una run Revisore riuscita sul commit corrente.');
+
+            const {data:reviews}=await github.rest.pulls.listReviews({...context.repo,pull_number:prNumber,per_page:100});
+            const latest=new Map();
+            for (const review of reviews) {
+              const login=(review.user?.login||'').toLowerCase();
+              if (login) latest.set(login,review);
+            }
+            let independentReview=false;
+            for (const [login,review] of latest) {
+              if (review.state!=='APPROVED' || review.commit_id!==sha ||
+                  assignedMembers.includes(login) || login==='github-actions[bot]' ||
+                  login===(pr.user?.login||'').toLowerCase())
+                continue;
+              try {
+                const {data:perm}=await github.rest.repos.getCollaboratorPermissionLevel({
+                  ...context.repo,username:login
+                });
+                if (!['write','maintain','admin'].includes(perm.permission)) continue;
+                independentReview=true;
+              } catch (error) { core.warning('Permessi revisore non verificabili: '+login); }
+            }
+            if (!independentReview)
+              problems.push('Serve una review APPROVED di un membro Write non assegnato al task, sullo SHA corrente (TM o PM).');
+            if (problems.length) { core.setFailed(problems.map(p=>'- '+p).join('\n')); return; }
+            core.notice('Gate superato: Tester, Revisore AI, review umana indipendente e SHA verificati. CI e CODEOWNERS restano obbligatori.');
