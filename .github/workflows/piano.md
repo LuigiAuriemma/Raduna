@@ -8,7 +8,7 @@ on:
 # Blocco locale intenzionale: budget e attivazione devono essere approvati dal PM.
 if: "github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'fase:piano' && github.event.issue.state == 'open' && contains(github.event.issue.labels.*.name, 'task-agente')"
 engine: copilot 
-model: router/balanced
+model: auto 
 imports:
   - .github/agents/pianificatore.agent.md
 permissions:
