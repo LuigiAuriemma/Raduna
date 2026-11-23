@@ -20,7 +20,7 @@ done < "$RUNNER_TEMP/raduna-blobs"
 test -s /etc/ssl/certs/ca-certificates.crt
 case "$ROLE" in implementatore) credits=200;; tester) credits=150;; revisore) credits=100;; esac
 docker run --rm --read-only --user "$(id -u):$(id -g)" --cap-drop ALL \
-  --security-opt no-new-privileges --pids-limit 128 --tmpfs /tmp:rw,nosuid,nodev,size=1g \
+  --security-opt no-new-privileges --pids-limit 128 --tmpfs /tmp:rw,nosuid,nodev,exec,size=1g \
   --mount 'type=bind,src=/etc/ssl/certs,dst=/etc/ssl/certs,readonly' \
   --mount "type=bind,src=$workspace,dst=/work,readonly" \
   --mount "type=bind,src=$RUNNER_TEMP/role-prompt,dst=/prompt,readonly" \
