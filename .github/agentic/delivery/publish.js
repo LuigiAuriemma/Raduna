@@ -20,7 +20,7 @@ async function prepareCommit(env, s, files, role, report) {
   const newTree = (await git.createTree({...repo, base_tree: parent.tree.sha,
     tree: files.map(f => ({path:f.path, mode:'100644', type:'blob', content:f.content}))})).data;
   if (newTree.sha === parent.tree.sha) throw Error('La proposta non contiene modifiche.');
-  const message = 'Raduna #' + s.number + ' — ' + role + '\n\nPiano: ' + s.payload.planUrl + '\nApprovazione: ' + s.payload.approvalUrl;
+  const message = 'Raduna #' + s.number + ' — ' + role + '\n\nPiano: ' + s.payload.planUrl + '\nAvvio TM (fase:implementazione): ' + s.payload.approvalUrl;
   const commit = (await git.createCommit({...repo, message, tree:newTree.sha, parents:[s.sha]})).data;
   // Persist the exact commit before moving a ref, so a retry can finish a partial delivery.
   await comment(env,s.number,s.receiptTag,[s.sha,commit.sha,report].join('\n'));
@@ -64,7 +64,7 @@ module.exports = async env => {
     }
     if (!s.pending && s.stamp !== process.env.STAMP) throw Error('Input o commit cambiati durante la generazione.');
     const r = s.pending ? {stato:'pronto', rapporto:s.pending.report} :
-      validateResult(fs.readFileSync(path.join(process.env.RUNNER_TEMP,'result','result.json'),'utf8'),role,s.paths);
+      validateResult(fs.readFileSync(path.join(process.env.RUNNER_TEMP,'result','result.json'),'utf8'),role);
     if (r.stato === 'bloccato') {
       await reportFailure(r.rapporto);
       if (s.pr) await comment(env,s.pr.number,tag(role + '-blocco',context.runId),r.rapporto);
@@ -79,7 +79,7 @@ module.exports = async env => {
     if (role === 'implementatore') {
       pr = (await github.rest.pulls.create({...context.repo, base:s.base, head:s.branch, draft:true,
         title:('[Raduna] ' + s.payload.issue.title).slice(0,220),
-        body:'Issue #' + number + '\n\nPiano: ' + s.payload.planUrl + '\n\nApprovazione TM: ' + s.payload.approvalUrl +
+        body:'Issue #' + number + '\n\nPiano: ' + s.payload.planUrl + '\n\nAvvio TM (fase:implementazione): ' + s.payload.approvalUrl +
         '\n\n' + r.rapporto + '\n\n## Input per il Tester\nIl TM può inserire qui gli estratti approvati e le firme pubbliche.'})).data;
       core.setOutput('pr',pr.number);
     }

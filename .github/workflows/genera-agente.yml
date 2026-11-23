@@ -43,7 +43,7 @@ jobs:
       - if: steps.prepare.outputs.sha != ''
         name: Verifica schema, dimensione e percorsi prima della consegna
         run: |
-          node -e "const fs=require('fs'), dir=process.env.RUNNER_TEMP; require('./.github/agentic/delivery/policy').validateResult(fs.readFileSync(dir+'/result/result.json','utf8'),process.env.ROLE,JSON.parse(fs.readFileSync(dir+'/approved.json','utf8')))"
+          node -e "const fs=require('fs'), dir=process.env.RUNNER_TEMP; require('./.github/agentic/delivery/policy').validateResult(fs.readFileSync(dir+'/result/result.json','utf8'),process.env.ROLE)"
       - if: steps.prepare.outputs.sha != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:

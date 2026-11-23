@@ -1,5 +1,5 @@
 name: Task agentico Raduna
-description: Avvio controllato di un singolo caso d'uso; YouTrack resta il riferimento principale.
+description: Avvio controllato di un task Raduna con piano e approvazione del TM.
 title: "[Raduna] "
 labels: [task-agente]
 body:
@@ -9,33 +9,26 @@ body:
         La Issue raccoglie piano, approvazione del TM, Draft PR, revisione, test e stato CI.
         Non inserire segreti o dati personali. Una label non approva il piano.
   - type: input
-    id: youtrack
-    attributes:
-      label: Task YouTrack e Work Package
-      description: ID e collegamento effettivi; non usare identificativi inventati.
-    validations:
-      required: true
-  - type: input
     id: usecase
     attributes:
-      label: Requisito e caso d'uso
-      description: ID RAD, priorità approvata e un solo caso d'uso o sequence diagram.
+      label: Comportamento richiesto
+      description: Descrivi un comportamento circoscritto; aggiungi ID RAD o caso d'uso quando disponibili.
     validations:
       required: true
   - type: textarea
     id: references
     attributes:
-      label: Artefatti approvati
-      description: RAD, SDD, ODD, class/sequence/component diagram; versione, posizione e prova di approvazione. Motivare le voci non applicabili.
+      label: Fonti disponibili
+      description: Indica requisiti, modelli e versioni disponibili; segnala le fonti mancanti che possono influire sul task.
     validations:
-      required: true
+      required: false
   - type: textarea
     id: frames
     attributes:
-      label: Category Partition e test frame
-      description: Per ogni frame indicare input, precondizioni, esito atteso e fonte approvata. Includere firme pubbliche separate dai corpi dei metodi.
+      label: Test frame disponibili
+      description: Indica frame, input ed esiti disponibili; se assenti, descrivi i casi da verificare nei criteri di accettazione.
     validations:
-      required: true
+      required: false
   - type: textarea
     id: acceptance
     attributes:
@@ -47,6 +40,6 @@ body:
     id: tm
     attributes:
       label: TM responsabile
-      description: Assegna il TM anche nel campo Assignees. Dopo il piano il TM commenta «Approvo il piano URL» con il link al commento e aggiunge fase:implementazione.
+      description: Assegna il TM anche nel campo Assignees. Dopo aver verificato il piano, il TM aggiunge fase:implementazione per avviare l'agente.
     validations:
       required: true
