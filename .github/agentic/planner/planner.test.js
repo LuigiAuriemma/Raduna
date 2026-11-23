@@ -34,6 +34,17 @@ test('estrae solo la risposta finale da eventi Copilot completi', () => {
   assert.throws(() => extract([...events.slice(0, -1), {type: 'result', exitCode: 1}].map(JSON.stringify).join('\n')));
   assert.throws(() => extract([events[0], events[1], events[3], events[2]].map(JSON.stringify).join('\n')));
   assert.throws(() => extract([...events, events[3]].map(JSON.stringify).join('\n')));
+  assert.equal(extract([
+    {type: 'assistant.turn_end', data: {turnId: '0'}},
+    {type: 'assistant.message', data: {phase: 'final_answer', content: plan, turnId: '1'}},
+    {type: 'assistant.turn_end', data: {turnId: '1'}},
+    {type: 'result', exitCode: 0}
+  ].map(JSON.stringify).join('\n')), plan);
+  assert.throws(() => extract([
+    {type: 'assistant.message', data: {phase: 'final_answer', content: plan, turnId: '1'}},
+    {type: 'assistant.turn_end', data: {turnId: '2'}},
+    {type: 'result', exitCode: 0}
+  ].map(JSON.stringify).join('\n')));
 });
 
 test('il validatore accetta un blocco esplicito e rifiuta output incompleto o credenziali', () => {
